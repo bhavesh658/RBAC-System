@@ -45,7 +45,12 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
-
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "RBAC API is running"
+  });
+});
 app.use('/api/v1', apiRoutes);
 
 
