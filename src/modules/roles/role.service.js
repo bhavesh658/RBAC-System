@@ -29,7 +29,7 @@ const createRole = async (data, user) => {
     description: `${user.firstName} ${user.lastName} created role ${role.name}`,
     recordId: role._id,
     metadata: {
-      newvalue: {
+      newValue: {
         name: role.name,
         department: role.department,
       }
@@ -86,7 +86,7 @@ const assignPermissions = async (roleId, permissionIds, user) => {
     description: `${user.firstName} ${user.lastName} assigned permissions to role "${role.name}"`,
     performedBy: user._id,
     metadata: {
-      newvalue: {
+      newValue: {
         permissions: role.permissions,
       }
     }
@@ -123,7 +123,7 @@ const removePermissions = async (roleId, permissionIds, user) => {
     description: `${user.firstName} ${user.lastName} removed permissions to role "${role.name}"`,
     performedBy: user._id,
     metadata: {
-      oldvalue: {
+      previousValue : {
         permissions: role.permissions,
       }
     }
@@ -176,11 +176,11 @@ const updateRole = async (id, data, user) => {
     recordId: role._id,
     performedBy: user._id,
     metadata: {
-      oldvalue: {
+      previousValue : {
         name: oldRoleData.name,
         department: oldRoleData.department,
       },
-      newvalue: {
+      newValue: {
         name: data.name || role.name,
         department: data.department || role.department,
       }

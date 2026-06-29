@@ -9,7 +9,7 @@ const reportRoutes = require('../modules/reports/report.route');
 const permissionRoutes = require('../modules/permissions/permission.route');
 const leadRoutes = require('../modules/leads/lead.route');
 const projectRoutes = require('../modules/projects/project.route');
-const TaskRoutes = require("../modules/tasks/task.route")
+const taskRoutes = require("../modules/tasks/task.route")
 const activityLogRoutes = require('../modules/activity-logs/activityLog.route');
 
 const router = express.Router();
@@ -24,7 +24,7 @@ router.use('/attendance', attendanceRoutes);
 router.use('/reports', reportRoutes);
 router.use('/permissions', permissionRoutes);
 router.use('/leads', leadRoutes);
-router.use('/tasks',TaskRoutes)
+router.use('/tasks',taskRoutes)
 router.use('/activity-logs', activityLogRoutes);
 
 module.exports = router;

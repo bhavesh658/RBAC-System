@@ -90,7 +90,7 @@ const updateUser = async (id, data, updatedBy) => {
     recordId: user._id,
     performedBy: updatedBy._id,
     metadata: {
-      oldValue: {
+      previousValue : {
         firstName: oldData.firstName,
         lastName: oldData.lastName,
         email: oldData.email,

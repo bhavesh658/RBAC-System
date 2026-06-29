@@ -1,17 +1,9 @@
 const Project = require('./project.model');
 const User = require('../users/user.model');
-const AppError = require(
-    '../../common/AppError'
-);
-
-const HTTP_STATUS = require(
-    '../../constants/httpStatus'
-);
-const {
-    createActivityLog,
-} = require(
-    '../activity-logs/activityLog.service'
-);
+const AppError = require('../../common/AppError');
+const HTTP_STATUS = require('../../constants/httpStatus');
+const { createActivityLog, } = require('../activity-logs/activityLog.service');
+const pagination = require('../../common/pagination');
 
 
 const createProject = async (
@@ -47,12 +39,10 @@ const createProject = async (
 
 
 
-const getAllProjects = async (
-    query = {}
-) => {
-    const filter = {
-        isDeleted: false,
-    };
+const getAllProjects = async (query = {}) => {
+    const { page, limit, skip } = pagination(query);
+
+    const filter = { isDeleted: false, };
 
     // Optional filters
     if (query.status) {
@@ -92,6 +82,8 @@ const getAllProjects = async (
                 'updatedBy',
                 'firstName lastName'
             )
+            .skip(skip)
+            .limit(limit)
 
             .sort({
                 createdAt: -1,
@@ -382,98 +374,93 @@ const removeTeamMember = async (
     return project;
 };
 
-const changeProjectManager =
-    async (
-        projectId,
-        projectManager,
-        currentUser
-    ) => {
+const changeProjectManager = async (projectId, projectManager, currentUser) => {
 
-        const project =
-            await Project.findOne({
-                _id: projectId,
-                isDeleted: false,
-            });
+    const project = await Project.findOne({
+        _id: projectId,
+        isDeleted: false,
+    });
 
-        if (!project) {
-            throw new AppError(
-                'Project not found',
-                HTTP_STATUS.NOT_FOUND
-            );
-        }
+    if (!project) {
+        throw new AppError(
+            "Project not found",
+            HTTP_STATUS.NOT_FOUND
+        );
+    }
 
-        const previousManagerId =
-            project.projectManager;
-        const oldManager =
-            previousManagerId
-                ? await User.findById(
-                    previousManagerId
-                ).select(
-                    'firstName lastName'
-                )
-                : null;
-        project.projectManager =
-            projectManager;
+    const manager = await User.findById(projectManager).select(
+        "firstName lastName"
+    );
 
+    if (!manager) {
+        throw new AppError(
+            "Project manager not found",
+            HTTP_STATUS.NOT_FOUND
+        );
+    }
 
-        const exists =
-            project.teamMembers.some(
-                (member) =>
-                    member.toString() ===
-                    projectManager
-            );
+    // Fetch previous manager (for activity log)
+    let oldManager = null;
 
-        if (!exists) {
-            project.teamMembers.push(
-                projectManager
-            );
-        }
+    if (project.projectManager) {
+        oldManager = await User.findById(project.projectManager).select(
+            "firstName lastName"
+        );
+    }
 
-        project.updatedBy =
-            currentUser._id;
+    // Prevent unnecessary update
+    if (
+        project.projectManager &&
+        project.projectManager.toString() === projectManager.toString()
+    ) {
+        throw new AppError(
+            "Selected user is already the project manager.",
+            HTTP_STATUS.BAD_REQUEST
+        );
+    }
 
-        await project.save();
+    // Update manager
+    project.projectManager = projectManager;
 
-        const manager =
-            await User.findById(
-                projectManager
-            ).select(
-                'firstName lastName'
-            );
-        if (!manager) {
-            throw new AppError(
-                'Project manager not found',
-                HTTP_STATUS.NOT_FOUND
-            );
-        }
+    // Ensure manager is part of the team
+    const isAlreadyTeamMember = project.teamMembers.some(
+        (member) => member.toString() === projectManager.toString()
+    );
 
-        await createActivityLog({
-            module: 'Project',
-            action: 'Change Manager',
-            description:
-                `${currentUser.fullName} changed project manager for ${project.name}`,
-            recordId: project._id,
-            performedBy: currentUser._id,
-            metadata: {
-                previousValue: oldManager
-                    ? {
-                        managerId:
-                            oldManager._id,
-                        managerName:
-                            `${oldManager.firstName} ${oldManager.lastName}`,
-                    }
-                    : null,
+    if (!isAlreadyTeamMember) {
+        project.teamMembers.push(projectManager);
+    }
 
-                newValue: {
-                    managerId:
-                        manager._id,
-                    managerName:
-                        `${manager.firstName} ${manager.lastName}`,
-                },
+    project.updatedBy = currentUser._id;
+
+    await project.save();
+
+    // Activity Log
+    await createActivityLog({
+        module: "Project",
+        action: "Change Manager",
+        description: `${currentUser.fullName} changed project manager for ${project.name}`,
+        recordId: project._id,
+        performedBy: currentUser._id,
+        metadata: {
+            previousValue: oldManager
+                ? {
+                    managerId: oldManager._id,
+                    managerName: `${oldManager.firstName} ${oldManager.lastName}`,
+                }
+                : null,
+
+            newValue: {
+                managerId: manager._id,
+                managerName: `${manager.firstName} ${manager.lastName}`,
             },
-        });
-        return project;
-    };
+        },
+    });
+
+    return project;
+};
+
+
 module.exports = {
     createProject,
     getAllProjects,

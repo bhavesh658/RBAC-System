@@ -41,6 +41,12 @@ const activityLogSchema =
         }
     );
 
+
+activityLogSchema.index({ performedBy: 1, createdAt: -1 });
+activityLogSchema.index({ module: 1, action: 1, createdAt: -1 });
+activityLogSchema.index({ recordId: 1 });
+
+
 module.exports = mongoose.model(
     'ActivityLog',
     activityLogSchema

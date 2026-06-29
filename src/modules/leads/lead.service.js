@@ -158,21 +158,8 @@ const updateLead = async (
   payload,
   currentUser
 ) => {
-  
-  const lead = await Lead.findOne(
-    {
-      _id: leadId,
-      isDeleted: false,
-    },
-    {
-      ...payload,
-      updatedBy: currentUser._id,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+
+  const lead = await Lead.findOne({ _id: leadId, isDeleted: false });
 
   if (!lead) {
     throw new AppError(
@@ -191,7 +178,7 @@ const updateLead = async (
     performedBy: currentUser._id,
     recordId: lead._id,
     metadata: {
-      newvalue: {
+      newValue: {
         ...payload,
         updatedBy: currentUser._id,
       }
@@ -206,19 +193,14 @@ const deleteLead = async (
   leadId,
   currentUser
 ) => {
-  const lead = await Lead.findOneAndUpdate(
-    {
-      _id: leadId,
-      isDeleted: false,
-    },
-    {
-      isDeleted: true,
-      updatedBy: currentUser._id,
-    },
-    {
-      new: true,
-    }
-  );
+  const lead = await Lead.findOneAndUpdate({ _id: leadId, isDeleted: false,});
+
+  if (!lead) {
+    throw new AppError(
+      'Lead not found',
+      HTTP_STATUS.NOT_FOUND
+    );
+  }
 
   await createActivityLog({
     module: 'Lead',
@@ -227,13 +209,6 @@ const deleteLead = async (
     performedBy: currentUser._id,
     recordId: lead._id,
   });
-
-  if (!lead) {
-    throw new AppError(
-      'Lead not found',
-      HTTP_STATUS.NOT_FOUND
-    );
-  }
 
   return null;
 };
@@ -251,7 +226,7 @@ const assignLead = async (leadId, assignedTo, currentUser) => {
   });
 
   if (!user) {
-    throw new AppError( 
+    throw new AppError(
       'Assigned user not found or inactive',
       HTTP_STATUS.NOT_FOUND
     );
@@ -262,7 +237,7 @@ const assignLead = async (leadId, assignedTo, currentUser) => {
       HTTP_STATUS.NOT_FOUND
     );
   }
-  const oldlead ={
+  const oldlead = {
     assignedTo: lead.assignedTo,
     status: lead.status,
   }
@@ -272,12 +247,12 @@ const assignLead = async (leadId, assignedTo, currentUser) => {
     description: `${currentUser.firstName} ${currentUser.lastName} assigned lead "${lead._id}" to user "${user.firstName} ${user.lastName}"`,
     performedBy: currentUser._id,
     metadata: {
-      oldvalue: {
+      previousValue : {
         assignedTo: oldlead.assignedTo,
         status: oldlead.status,
       }
-    ,
-      newvalue: {
+      ,
+      newValue: {
         assignedTo,
         status: oldlead.status,
       }
@@ -302,7 +277,7 @@ const updateLeadStatus = async (
     performedBy: currentUser._id,
     recordId: leadId,
     metadata: {
-      newvalue: {
+      newValue: {
         status,
       }
     }

@@ -1,25 +1,13 @@
 const Task = require('./task.model');
 const User = require('../users/user.model');
-const AppError = require(
-  '../../common/AppError'
-);
+const AppError = require('../../common/AppError');
 
-const HTTP_STATUS = require(
-  '../../constants/httpStatus'
-);
+const HTTP_STATUS = require('../../constants/httpStatus');
+const pagination = require('../../common/pagination');
+const {createActivityLog,} = require('../activity-logs/activityLog.service');
 
 
-const {
-  createActivityLog,
-} = require(
-  '../activity-logs/activityLog.service'
-);
-
-
-const createTask = async (
-  payload,
-  currentUser
-) => {
+const createTask = async (payload, currentUser) => {
 
   const task =
     await Task.create({
@@ -51,9 +39,9 @@ const createTask = async (
 
 
 
-const getAllTasks = async (
-  query = {}
-) => {
+const getAllTasks = async ( query = {}) => {
+
+  const { page, limit, skip } = pagination(query);
 
   const filter = {
     isDeleted: false,
@@ -101,6 +89,8 @@ const getAllTasks = async (
         'updatedBy',
         'firstName lastName'
       )
+      .skip(skip)
+      .limit(limit)
 
       .sort({
         createdAt: -1,
@@ -329,8 +319,7 @@ const assignTask = async (
 
 
 
-const changeTaskStatus =
-  async (
+const changeTaskStatus =async (
     taskId,
     status,
     currentUser
