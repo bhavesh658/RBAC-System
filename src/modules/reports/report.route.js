@@ -34,4 +34,13 @@ router.get(
   reportController.getDepartmentReport
 );
 
+
+router.get(
+  '/user/:id',
+  authenticate,
+  authorize('reports.read'),
+  validateObjectId,
+  reportController.getUserReport
+);
+
 module.exports = router;

@@ -35,12 +35,18 @@ const createDepartment = async (data, user) => {
 };
 
 const getAllDepartments = async (options = {}) => {
-  const { limit, skip } = pagination(options);
-  return Department.find()
+  const { page = 1, limit = 10, skip } = pagination(options); 
+  
+  const departments = await Department.find()
     .populate('head', 'firstName lastName email')
     .populate('createdBy', 'firstName email')
     .skip(skip)
     .limit(limit);
+
+  const totalDepartments = await Department.countDocuments();
+  const totalPages = Math.ceil(totalDepartments / limit);
+
+  return { departments, totalPages, totalDepartments, currentPage: page };
 };
 
 const getDepartmentById = async (id) => {
@@ -78,7 +84,6 @@ const updateDepartment = async (id, data, user) => {
 };
 
 const assignHead = async (deptId, userId, currentUser) => {
-  // 1. Validate userId
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     throw new AppError(
       'Invalid user ID',
@@ -86,7 +91,6 @@ const assignHead = async (deptId, userId, currentUser) => {
     );
   }
 
-  // 2. Trim spaces and find user
   const user = await User.findById(userId.trim());
 
   if (!user) {
@@ -96,7 +100,6 @@ const assignHead = async (deptId, userId, currentUser) => {
     );
   }
 
-  // 3. Validate departmentId
   if (!mongoose.Types.ObjectId.isValid(deptId)) {
     throw new AppError(
       'Invalid department ID',
@@ -104,7 +107,7 @@ const assignHead = async (deptId, userId, currentUser) => {
     );
   }
 
-  // 4. Update department head
+  // 1. Department ko update karo
   const dept = await Department.findByIdAndUpdate(
     deptId,
     {
@@ -118,13 +121,16 @@ const assignHead = async (deptId, userId, currentUser) => {
     .populate('head', 'firstName lastName email')
     .populate('createdBy', 'firstName lastName email');
 
-  // 5. Check if department exists
   if (!dept) {
     throw new AppError(
       'Department not found',
       HTTP_STATUS.NOT_FOUND
     );
   }
+
+
+  user.department = dept._id;
+  await user.save(); 
 
   await createActivityLog({
     module: 'Department',

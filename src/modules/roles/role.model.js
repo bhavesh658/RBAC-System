@@ -44,6 +44,10 @@ const roleSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
 
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,

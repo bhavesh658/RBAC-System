@@ -48,8 +48,34 @@ const getDepartmentReport = asyncHandler(async (req, res) => {
   );
 });
 
+const getUserReport = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  let { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    const date = new Date();
+    startDate = new Date(date.getFullYear(), date.getMonth(), 1).toISOString(); // 1st day of current month
+    endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).toISOString(); // Last day of current month
+  }
+
+  const data = await reportService.getUserComprehensiveReport(
+    id,
+    startDate,
+    endDate
+  );
+
+  return sendResponse(
+    res,
+    HTTP_STATUS.OK,
+    'User comprehensive report fetched successfully',
+    data
+  );
+});
+
+
 module.exports = {
   getDailyReport,
   getMonthlyReport,
   getDepartmentReport,
+  getUserReport,
 };

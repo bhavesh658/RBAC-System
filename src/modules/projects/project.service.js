@@ -42,54 +42,41 @@ const createProject = async (
 const getAllProjects = async (query = {}) => {
     const { page, limit, skip } = pagination(query);
 
-    const filter = { isDeleted: false, };
-
-    // Optional filters
+    const filter = { isDeleted: false };
     if (query.status) {
-        filter.status =
-            query.status;
+        filter.status = query.status;
     }
-
     if (query.priority) {
-        filter.priority =
-            query.priority;
+        filter.priority = query.priority;
     }
-
     if (query.projectManager) {
-        filter.projectManager =
-            query.projectManager;
+        filter.projectManager = query.projectManager;
     }
 
-    const projects =
-        await Project.find(filter)
+    // 1. Fetch Projects Data
+    const projects = await Project.find(filter)
+        .populate('projectManager', 'firstName lastName email')
+        .populate('teamMembers', 'firstName lastName email')
+        .populate('createdBy', 'firstName lastName')
+        .populate('updatedBy', 'firstName lastName')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
 
-            .populate(
-                'projectManager',
-                'firstName lastName email'
-            )
+    // 🚀 2. FIX: Total Count Nikalo
+    const totalRecords = await Project.countDocuments(filter);
+    const totalPages = Math.ceil(totalRecords / limit);
 
-            .populate(
-                'teamMembers',
-                'firstName lastName email'
-            )
-
-            .populate(
-                'createdBy',
-                'firstName lastName'
-            )
-
-            .populate(
-                'updatedBy',
-                'firstName lastName'
-            )
-            .skip(skip)
-            .limit(limit)
-
-            .sort({
-                createdAt: -1,
-            });
-
-    return projects;
+    // 3. Return both Data and Pagination Meta
+    return {
+        projects,
+        pagination: {
+            totalRecords,
+            totalPages,
+            currentPage: Number(page) || 1,
+            limit: Number(limit) || 10
+        }
+    };
 };
 
 

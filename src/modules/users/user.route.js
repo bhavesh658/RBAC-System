@@ -20,7 +20,7 @@ router.post(
 router.get(
   '/',
   authenticate,
-  authorize('users.read'),
+  authorize('users.read'),  
   userController.getUsers
 );
 

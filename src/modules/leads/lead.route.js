@@ -35,6 +35,13 @@ router.get(
 
 
 router.get(
+  '/my-leads',
+  authenticate,
+  // authorize('leads.read'), 
+  leadController.getMyLeads
+);
+
+router.get(
   '/:id',
   authenticate,
   authorize('leads.read'),

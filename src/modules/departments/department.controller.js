@@ -19,14 +19,15 @@ const createDepartment = asyncHandler(async (req, res) => {
 });
 
 const getAllDepartments = asyncHandler(async (req, res) => {
-  const depts = await departmentService.getAllDepartments(req.query);
+  const result = await departmentService.getAllDepartments(req.query);
 
-  return sendResponse(
-    res,
-    HTTP_STATUS.OK,
-    'Departments fetched successfully',
-    depts
-  );
+  return res.status(200).json({
+    success: true,
+    message: 'Departments fetched successfully',
+    data: result.departments, 
+    totalPages: result.totalPages, 
+    currentPage: result.currentPage
+  });
 });
 
 const getDepartmentById = asyncHandler(async (req, res) => {

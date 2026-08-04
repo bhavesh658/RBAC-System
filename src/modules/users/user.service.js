@@ -45,17 +45,29 @@ const createUser = async (data, createdBy) => {
 const getUsers = async (filter = {}, query = {}) => {
   const { page, limit, skip } = pagination(query);
 
-  return User.find(filter)
+  const users = await User.find(filter)
     .populate('department', 'name code')
     .populate('role', 'name permissions')
     .skip(skip)
     .limit(limit);
+
+  const totalUsers = await User.countDocuments(filter);
+  
+  const totalPages = Math.ceil(totalUsers / limit);
+
+  return { users, totalPages, totalUsers, currentPage: page };
 };
 
 const getUserById = async (id) => {
   const user = await User.findById(id)
     .populate('department')
-    .populate('role');
+    .populate({
+      path: 'role',
+      populate: {
+        path: 'permissions', 
+        select: 'name' 
+      }
+    });
 
   if (!user) {
     throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
@@ -63,7 +75,6 @@ const getUserById = async (id) => {
 
   return user;
 };
-
 
 const updateUser = async (id, data, updatedBy) => {
   const user = await User.findOne({ _id: id });

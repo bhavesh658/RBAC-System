@@ -11,6 +11,7 @@ const HTTP_STATUS = require('../constants/httpStatus');
 const asyncHandler = require('../common/asyncHandler');
 
 const authenticate = asyncHandler(async (req, res, next) => {
+    
     let token = null;
 
     // Get token from Authorization header

@@ -88,6 +88,26 @@ const getAllRoles = asyncHandler(async (req, res) => {
   );
 });
 
+const toggleRoleStatus = asyncHandler(async (req, res) => {
+  const role = await roleService.toggleRoleStatus(req.params.id, req.user);
+  
+  const message = role.isActive ? 'Role activated successfully' : 'Role deactivated successfully';
+  
+  return sendResponse(res, HTTP_STATUS.OK, message, role);
+});
+
+
+const deleteRole = asyncHandler(async (req, res) => {
+  await roleService.deleteRole(req.params.id, req.user);
+  
+  return sendResponse(
+    res,
+    HTTP_STATUS.OK,
+    'Role deleted successfully'
+  );
+});
+
+
 module.exports = {
   createRole,
   getRolesByDepartment,
@@ -95,4 +115,6 @@ module.exports = {
   getAllRoles,
   updateRole,
   removePermissions,
+  toggleRoleStatus,
+  deleteRole
 };

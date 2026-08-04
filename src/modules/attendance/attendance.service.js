@@ -34,12 +34,14 @@ const punchIn = async (userId) => {
 
 
 const punchOut = async (userId) => {
- 
   const attendance = await Attendance.findOne({
     user: userId,
-    punchIn: { $exists: true },
-    punchOut: { $exists: false },
-  }).sort({ punchIn: -1 }); // Sabse naya open record pehle laayein
+    punchIn: { $exists: true, $ne: null }, 
+    $or: [
+      { punchOut: { $exists: false } },    
+      { punchOut: null }                  
+    ]
+  }).sort({ punchIn: -1 });
 
   if (!attendance) {
     throw new AppError(
@@ -50,12 +52,9 @@ const punchOut = async (userId) => {
 
   attendance.punchOut = new Date();
 
-  const diff =
-    (attendance.punchOut - attendance.punchIn) /
-    (1000 * 60 * 60);
-
+  const diff = (attendance.punchOut - attendance.punchIn) / (1000 * 60 * 60);
   attendance.totalHours = parseFloat(diff.toFixed(2));
-
+  
   await attendance.save();
 
   return attendance;

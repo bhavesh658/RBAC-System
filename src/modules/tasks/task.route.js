@@ -1,100 +1,107 @@
-const express = require('express');
+  const express = require('express');
 
-const router = express.Router();
+  const router = express.Router();
 
-const authenticate = require(
-  '../../middleware/authenticate'
-);
+  const authenticate = require(
+    '../../middleware/authenticate'
+  );
 
-const authorize = require(
-  '../../middleware/authorize'
-);
+  const authorize = require(
+    '../../middleware/authorize'
+  );
 
-const validateRequest = require(
-  '../../middleware/validateRequest'
-);
+  const validateRequest = require(
+    '../../middleware/validateRequest'
+  );
 
-const taskController = require(
-  './task.controller'
-);
+  const taskController = require(
+    './task.controller'
+  );
 
-const {
-  createTaskValidation,
-  updateTaskValidation,
-  assignTaskValidation,
-  changeTaskStatusValidation,
-} = require(
-  './task.validation'
-);
-
-
-router.post(
-  '/',
-  authenticate,
-  authorize('tasks.create'),
-  createTaskValidation,
-  validateRequest,
-  taskController.createTask
-);
+  const {
+    createTaskValidation,
+    updateTaskValidation,
+    assignTaskValidation,
+    changeTaskStatusValidation,
+  } = require(
+    './task.validation'
+  );
 
 
+  router.get(
+    '/my-tasks'
+    ,authenticate,
+    taskController.getMyTasks);
 
-router.get(
-  '/',
-  authenticate,
-  authorize('tasks.read'),
-  taskController.getAllTasks
-);
+  router.post(
+    '/',
+    authenticate,
+    authorize('tasks.create'),
+    createTaskValidation,
+    validateRequest,
+    taskController.createTask
+  );
 
 
 
-router.get(
-  '/:id',
-  authenticate,
-  authorize('tasks.read'),
-  taskController.getTaskById
-);
+  router.get(
+    '/',
+    authenticate,
+    authorize('tasks.read'),
+    taskController.getAllTasks
+  );
 
 
 
-router.patch(
-  '/:id',
-  authenticate,
-  authorize('tasks.update'),
-  updateTaskValidation,
-  validateRequest,
-  taskController.updateTask
-);
+  router.get(
+    '/:id',
+    authenticate,
+    authorize('tasks.read'),
+    taskController.getTaskById
+  );
 
 
 
-router.delete(
-  '/:id',
-  authenticate,
-  authorize('tasks.delete'),
-  taskController.deleteTask
-);
+  router.patch(
+    '/:id',
+    authenticate,
+    authorize('tasks.update'),
+    updateTaskValidation,
+    validateRequest,
+    taskController.updateTask
+  );
 
 
 
-router.patch(
-  '/:id/assign',
-  authenticate,
-  authorize('tasks.assign'),
-  assignTaskValidation,
-  validateRequest,
-  taskController.assignTask
-);
+  router.delete(
+    '/:id',
+    authenticate,
+    authorize('tasks.delete'),
+    taskController.deleteTask
+  );
 
 
 
-router.patch(
-  '/:id/status',
-  authenticate,
-  authorize('tasks.update'),
-  changeTaskStatusValidation,
-  validateRequest,
-  taskController.changeTaskStatus
-);
+  router.patch(
+    '/:id/assign',
+    authenticate,
+    authorize('tasks.assign'),
+    assignTaskValidation,
+    validateRequest,
+    taskController.assignTask
+  );
 
-module.exports = router;
+
+
+  router.patch(
+    '/:id/status',
+    authenticate,
+    authorize('tasks.update'),
+    changeTaskStatusValidation,
+    validateRequest,
+    taskController.changeTaskStatus
+  );
+
+
+
+  module.exports = router;

@@ -136,26 +136,37 @@ const removePermissions = async (roleId, permissionIds, user) => {
       'name module action description'
     );
 };
-const getAllRoles = async (query = {}) => {
 
-  const filter = {};
+const getAllRoles = async (query = {}) => {
+  const filter = { isDeleted: { $ne: true } };
 
   if (query.department) {
     filter.department = query.department;
   }
 
+  const { page, limit, skip } = pagination(query);
 
-  const { limit, skip } = pagination(query);
-
-  return Role.find(filter)
+  const roles = await Role.find(filter)
     .populate('department', 'name code')
     .populate('permissions', 'name module action')
     .populate('parentRole', 'name')
     .skip(skip)
     .limit(limit)
     .sort({ name: 1 });
-};
 
+  const totalRecords = await Role.countDocuments(filter);
+  const totalPages = Math.ceil(totalRecords / limit);
+
+  return {
+    roles,
+    pagination: {
+      totalRecords,
+      totalPages,
+      currentPage: Number(page) || 1,
+      limit: Number(limit) || 10
+    }
+  };
+};
 const updateRole = async (id, data, user) => {
   const role = await Role.findOne({ _id: id });
 
@@ -190,6 +201,59 @@ const updateRole = async (id, data, user) => {
   return role;
 };
 
+const toggleRoleStatus = async (id, user) => {
+  const role = await Role.findById(id);
+  
+  if (!role) {
+    throw new AppError('Role not found', HTTP_STATUS.NOT_FOUND);
+  }
+  role.isActive = !role.isActive;
+  await role.save();
+
+  await createActivityLog({
+    module: 'Role',
+    action: 'Toggle Status',
+    description: `${user.firstName} ${user.lastName} toggled status of role "${role.name}"`,
+    recordId: role._id,
+    performedBy: user._id,
+  });
+
+  return role;
+};
+
+
+
+const deleteRole = async (id, deletedBy) => {
+  const role = await Role.findById(id);
+  
+  if (!role || role.isDeleted) {
+    throw new AppError('Role not found or already deleted', HTTP_STATUS.NOT_FOUND);
+  }
+
+  // 🛡️ SECURITY CHECK: 'Super Admin' ya 'Admin' role delete na ho sake
+  if (role.name.toLowerCase() === 'super admin' || role.name.toLowerCase() === 'admin') {
+    throw new AppError('Core system roles cannot be deleted', HTTP_STATUS.FORBIDDEN);
+  }
+
+  // 🗑️ SOFT DELETE LOGIC
+  role.isDeleted = true;
+  role.isActive = false; // Delete hone par automatically inactive bhi kar dena better hai
+  role.deletedAt = new Date(); // Kab delete hua uski timestamp save karne ke liye
+  
+  await role.save();
+
+  // Activity log generate karna
+  await createActivityLog({
+    module: 'Role',
+    action: 'Delete', // Frontend ya logs ke liye hum isko 'Delete' hi bolenge
+    description: `${deletedBy.firstName} ${deletedBy.lastName} deleted the role "${role.name}"`,
+    recordId: role._id,
+    performedBy: deletedBy._id,
+  });
+
+  return role;
+};
+
 module.exports = {
   createRole,
   getRolesByDepartment,
@@ -197,4 +261,6 @@ module.exports = {
   updateRole,
   getAllRoles,
   removePermissions,
+  toggleRoleStatus,
+  deleteRole
 };

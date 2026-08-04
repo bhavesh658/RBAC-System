@@ -7,10 +7,8 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Connect to MongoDB
     await connectDB();
 
-    // Start Express server
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
 

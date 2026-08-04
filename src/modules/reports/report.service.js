@@ -1,4 +1,7 @@
 const Attendance = require('../attendance/attendance.model');
+const User = require('../users/user.model');
+const Project = require('../projects/project.model');
+const Task = require('../tasks/task.model');
 const mongoose = require('mongoose'); 
 
 const getDailyReport = async (date) => {
@@ -94,8 +97,78 @@ const getDepartmentReport = async (departmentId) => {
   return report; 
 };
 
+
+
+const getUserComprehensiveReport = async (userId, startDate, endDate) => {
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  // 1. Fetch User Info
+  const user = await User.findById(userId)
+    .select('-password -__v') // Password remove karna zaroori hai
+    .populate('department', 'name code')
+    .populate('role', 'name');
+
+  if (!user) {
+    throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
+  }
+
+  const [attendanceRecords, projects, tasks] = await Promise.all([
+    
+    Attendance.find({
+      user: userId,
+      date: { $gte: start, $lte: end }
+    }).sort({ date: -1 }).select('date punchIn punchOut totalHours'),
+
+    Project.find({ assignees: userId })
+      .select('name status progress startDate endDate')
+      .lean(),
+
+    Task.find({ 
+      assignedTo: userId,
+      status: { $nin: ['Completed', 'Done'] } 
+    })
+      .select('title status priority dueDate')
+      .lean()
+  ]);
+
+  const totalDaysPresent = attendanceRecords.length;
+  const totalHoursWorked = attendanceRecords.reduce((acc, curr) => acc + (curr.totalHours || 0), 0);
+
+  return {
+    reportPeriod: {
+      startDate: start,
+      endDate: end
+    },
+    userDetails: {
+      id: user._id,
+      name: `${user.firstName} ${user.lastName || ''}`.trim(),
+      email: user.email,
+      department: user.department?.name || 'N/A',
+      role: user.role?.name || 'N/A',
+      status: user.isActive ? 'Active' : 'Inactive'
+    },
+    attendanceSummary: {
+      totalDaysPresent,
+      totalHoursWorked: parseFloat(totalHoursWorked.toFixed(2)),
+      averageHoursPerDay: totalDaysPresent > 0 ? parseFloat((totalHoursWorked / totalDaysPresent).toFixed(2)) : 0,
+      records: attendanceRecords
+    },
+    workProfile: {
+      activeProjectsCount: projects.length,
+      pendingTasksCount: tasks.length,
+      projects: projects,
+      tasks: tasks
+    }
+  };
+};
+
 module.exports = {
   getDailyReport,
   getMonthlyReport,
   getDepartmentReport,
+  getUserComprehensiveReport
 };

@@ -8,6 +8,7 @@ const createUser = asyncHandler(async (req, res) => {
     req.body,
     req.user._id
   );
+  
 
   return sendResponse(
     res,
@@ -18,19 +19,18 @@ const createUser = asyncHandler(async (req, res) => {
 });
 
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await userService.getUsers({}, req.query);
-
-  return sendResponse(
-    res,
-    HTTP_STATUS.OK,
-    'Users fetched successfully',
-    users
-  );
+  const result = await userService.getUsers({}, req.query);
+  return res.status(200).json({
+    success: true,
+    message: 'Users fetched successfully',
+    data: result.users,        
+    totalPages: result.totalPages 
+  });
 });
+
 
 const getUserById = asyncHandler(async (req, res) => {
   const user = await userService.getUserById(req.params.id);
-
   return sendResponse(
     res,
     HTTP_STATUS.OK,
@@ -59,10 +59,13 @@ const toggleUserStatus = asyncHandler(async (req, res) => {
     req.user
   );
 
+  const message = user.isActive 
+    ? 'User activated successfully' 
+    : 'User suspended successfully';
   return sendResponse(
     res,
     HTTP_STATUS.OK,
-    'User status updated successfully',
+    message,
     user
   );
 });

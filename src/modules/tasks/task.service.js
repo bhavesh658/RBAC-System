@@ -37,10 +37,46 @@ const createTask = async (payload, currentUser) => {
   return task;
 };
 
+const getMyTasks = async (query = {}, userId) => {
+  const { page, limit, skip } = pagination(query);
+
+  const filter = {
+    isDeleted: false,
+    assignedTo: userId 
+  };
+
+  if (query.project) filter.project = query.project;
+  if (query.status) filter.status = query.status;
+  if (query.priority) filter.priority = query.priority;
+
+  const tasks = await Task.find(filter)
+    .populate('project', 'name status')
+    .populate('assignedTo', 'firstName lastName email')
+    .populate('createdBy', 'firstName lastName')
+    .populate('updatedBy', 'firstName lastName')
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  const totalRecords = await Task.countDocuments(filter);
+  const totalPages = Math.ceil(totalRecords / limit);
+
+  return {
+    tasks,
+    pagination: {
+      totalRecords,
+      totalPages,
+      currentPage: Number(page) || 1,
+      limit: Number(limit) || 10
+    }
+  };
+};
 
 
-const getAllTasks = async ( query = {}) => {
 
+
+
+const getAllTasks = async (query = {}) => {
   const { page, limit, skip } = pagination(query);
 
   const filter = {
@@ -48,57 +84,40 @@ const getAllTasks = async ( query = {}) => {
   };
 
   if (query.project) {
-    filter.project =
-      query.project;
+    filter.project = query.project;
   }
-
   if (query.assignedTo) {
-    filter.assignedTo =
-      query.assignedTo;
+    filter.assignedTo = query.assignedTo;
   }
-
   if (query.status) {
-    filter.status =
-      query.status;
+    filter.status = query.status;
   }
-
   if (query.priority) {
-    filter.priority =
-      query.priority;
+    filter.priority = query.priority;
   }
 
-  const tasks =
-    await Task.find(filter)
+  const tasks = await Task.find(filter)
+    .populate('project', 'name status')
+    .populate('assignedTo', 'firstName lastName email')
+    .populate('createdBy', 'firstName lastName')
+    .populate('updatedBy', 'firstName lastName')
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
 
-      .populate(
-        'project',
-        'name status'
-      )
+  const totalRecords = await Task.countDocuments(filter);
+  const totalPages = Math.ceil(totalRecords / limit);
 
-      .populate(
-        'assignedTo',
-        'firstName lastName email'
-      )
-
-      .populate(
-        'createdBy',
-        'firstName lastName'
-      )
-
-      .populate(
-        'updatedBy',
-        'firstName lastName'
-      )
-      .skip(skip)
-      .limit(limit)
-
-      .sort({
-        createdAt: -1,
-      });
-
-  return tasks;
+  return {
+    tasks,
+    pagination: {
+      totalRecords,
+      totalPages,
+      currentPage: Number(page) || 1,
+      limit: Number(limit) || 10
+    }
+  };
 };
-
 
 
 const getTaskById = async (
@@ -377,4 +396,5 @@ module.exports = {
   deleteTask,
   assignTask,
   changeTaskStatus,
+  getMyTasks
 };

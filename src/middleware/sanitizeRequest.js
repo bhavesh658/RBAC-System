@@ -19,12 +19,10 @@ const sanitizeObject = (
     return;
   }
 
-  // Prevent excessive nesting
   if (depth > MAX_DEPTH) {
     return;
   }
 
-  // Prevent circular references
   if (seen.has(value)) {
     return;
   }

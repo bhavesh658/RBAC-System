@@ -193,20 +193,25 @@ const resetPassword = async (
 
 const changePassword = async (userId, currentPassword, newPassword) => {
     const user = await User.findById(userId).select('+password');
+    
     if (!user) {
         throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
     }
+    
+    // Check if current password matches
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
         throw new AppError('Current password is incorrect', HTTP_STATUS.BAD_REQUEST);
     }
+    
+    // Set new password (Mongoose pre-save hook automatically hash kar dega)
     user.password = newPassword;
     await user.save();
+
     return {
         message: 'Password changed successfully',
     };
-}
-
+};
 
 module.exports = {
     loginUser, forgotPassword, resetPassword, changePassword, logoutUser

@@ -1,5 +1,4 @@
 const { validationResult } = require('express-validator');
-
 const AppError = require('../common/AppError');
 const HTTP_STATUS = require('../constants/httpStatus');
 

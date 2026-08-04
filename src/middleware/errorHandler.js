@@ -15,12 +15,10 @@ const errorHandler = (error, req, res, next) => {
     logger.error(error.message, {
         stack: error.stack,
     });
-    // Additional validation or custom error details
     if (error.errors) {
         response.errors = error.errors;
     }
 
-    // Development mode only
     if (process.env.NODE_ENV === 'development') {
         response.stack = error.stack;
     }

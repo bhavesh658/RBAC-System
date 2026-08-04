@@ -14,12 +14,10 @@ const authorize = (...requiredPermissions) => {
             );
         }
 
-        // Super Admin bypass
         if (user.role.name === 'Super Admin') {
             return next();
         }
 
-        // Extract permission names from populated role.permissions
         const userPermissions = (user.role.permissions || []).map(
             (permission) =>
                 typeof permission === 'string'

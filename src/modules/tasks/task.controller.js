@@ -29,20 +29,16 @@ const createTask = asyncHandler(
 
 const getAllTasks = asyncHandler(
   async (req, res) => {
-    const tasks =
-      await taskService.getAllTasks(
-        req.query
-      );
+    const result = await taskService.getAllTasks(req.query);
 
     return sendResponse(
       res,
       HTTP_STATUS.OK,
       'Tasks fetched successfully',
-      tasks
+      result
     );
   }
 );
-
 
 
 const getTaskById = asyncHandler(
@@ -138,6 +134,22 @@ const changeTaskStatus = asyncHandler(
   }
 );
 
+const getMyTasks = asyncHandler(
+  async (req, res) => {
+    const userId = req.user._id; 
+    const result = await taskService.getMyTasks(req.query, userId);
+
+    return sendResponse(
+      res,
+      HTTP_STATUS.OK,
+      'My tasks fetched successfully',
+      result
+    );
+  }
+);
+
+
+
 module.exports = {
   createTask,
   getAllTasks,
@@ -146,4 +158,5 @@ module.exports = {
   deleteTask,
   assignTask,
   changeTaskStatus,
+  getMyTasks
 };

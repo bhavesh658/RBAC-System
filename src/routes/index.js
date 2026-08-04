@@ -1,4 +1,6 @@
 const express = require('express');
+const router = express.Router();
+
 
 const authRoutes = require('../modules/auth/auth.route');
 const departmentRoutes = require('../modules/departments/department.route');
@@ -12,7 +14,6 @@ const projectRoutes = require('../modules/projects/project.route');
 const taskRoutes = require("../modules/tasks/task.route")
 const activityLogRoutes = require('../modules/activity-logs/activityLog.route');
 
-const router = express.Router();
 
 
 router.use('/auth', authRoutes);

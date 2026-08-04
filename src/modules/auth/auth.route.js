@@ -10,7 +10,6 @@ const router = express.Router();
 
 
 
-// POST /api/v1/auth/login
 router.post('/login',loginValidation,validateRequest,login);
 router.post('/logout',authenticate,logout);
 router.get('/me',authenticate,getProfile);

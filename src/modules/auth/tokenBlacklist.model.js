@@ -18,7 +18,6 @@ const tokenBlacklistSchema =
     }
   );
 
-// Auto delete after expiry
 tokenBlacklistSchema.index(
   { expiresAt: 1 },
   { expireAfterSeconds: 0 }

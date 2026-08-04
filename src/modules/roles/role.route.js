@@ -1,7 +1,5 @@
 const express = require('express');
-
 const router = express.Router();
-
 const roleController = require('./role.controller');
 const { createRoleValidation } = require('./role.validation');
 const validateRequest = require('../../middleware/validateRequest');
@@ -20,12 +18,20 @@ router.post(
 );
 
 router.get(
-  '/department/:departmentId',
+  '/',
+  authenticate,
+  authorize('roles.read'),
+  roleController.getAllRoles
+);
+
+router.get(
+  '/department/:id',
   authenticate,
   authorize('roles.read'),
   validateObjectId,
   roleController.getRolesByDepartment
 );
+
 router.patch(
   '/:id/permissions',
   authenticate,
@@ -34,6 +40,7 @@ router.patch(
   validateRequest,
   roleController.assignPermissions
 );
+
 router.patch(
   '/:id/remove-permissions',
   authenticate,
@@ -42,6 +49,7 @@ router.patch(
   validateRequest,
   roleController.removePermissions
 );
+
 router.patch(
   '/:id',
   authenticate,
@@ -51,11 +59,22 @@ router.patch(
   roleController.updateRole
 );
 
-
-router.get(
-  '/',
+router.patch(
+  '/:id/toggle-status',
   authenticate,
-  authorize('roles.read'),
-  roleController.getAllRoles
+  authorize('roles.update'), 
+  validateObjectId,
+  roleController.toggleRoleStatus
 );
+
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('roles.update'), 
+  validateObjectId,
+  roleController.deleteRole
+);
+
+
+
 module.exports = router;

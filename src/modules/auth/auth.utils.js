@@ -44,6 +44,13 @@ const generateAccessToken = (user) => {
     department: user.department.toString(),
   };
 
+  // if (!user || !user._id ) {
+  //   throw new Error('Invalid user object for token generation');
+  // }
+  // const payload = {
+  //   sub: user._id.toString(),
+  // };
+
   const token = jwt.sign(
     payload,
     process.env.JWT_ACCESS_SECRET,

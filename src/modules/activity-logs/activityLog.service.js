@@ -29,51 +29,44 @@ const createActivityLog =
 
 
 
-const getAllActivityLogs =
-    async (query = {}) => {
-        const { limit, skip } = getPagination(query);
+const getAllActivityLogs = async (query = {}) => {
+    const { limit, skip } = getPagination(query);
+    const page = parseInt(query.page) || 1; 
 
-        const filter = {};
+    const filter = {};
 
-        if (query.module) {
-            filter.module =
-                query.module;
+    if (query.module) {
+        filter.module = query.module;
+    }
+    if (query.action) {
+        filter.action = query.action;
+    }
+    if (query.performedBy) {
+        filter.performedBy = query.performedBy;
+    }
+    if (query.recordId) {
+        filter.recordId = query.recordId;
+    }
+
+    const logs = await ActivityLog.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .populate('performedBy', 'firstName lastName email fullName') 
+        .sort({ createdAt: -1 });
+
+    const totalRecords = await ActivityLog.countDocuments(filter);
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    return {
+        logs,
+        pagination: {
+            totalRecords,
+            totalPages,
+            currentPage: page,
+            limit
         }
-
-        if (query.action) {
-            filter.action =
-                query.action;
-        }
-
-        if (query.performedBy) {
-            filter.performedBy =
-                query.performedBy;
-        }
-
-        if (query.recordId) {
-            filter.recordId =
-                query.recordId;
-        }
-
-        const logs =
-            await ActivityLog.find(
-                filter
-            )
-                .skip(skip)
-                .limit(limit)
-
-                .populate(
-                    'performedBy',
-                    'firstName lastName email'
-                )
-
-                .sort({
-                    createdAt: -1,
-                });
-
-        return logs;
     };
-
+};
 module.exports = {
     createActivityLog,
     getAllActivityLogs,

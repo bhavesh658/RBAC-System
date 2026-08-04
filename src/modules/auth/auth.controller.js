@@ -7,26 +7,22 @@ const TokenBlacklist = require('./tokenBlacklist.model');
 const login = asyncHandler(async (req, res) => {
 
   const result = await authService.loginUser(req.body);
+  const isProduction = process.env.NODE_ENV === 'production';
 
   res.cookie('accessToken', result.accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    secure: isProduction,
+    // Agar production hai toh 'none', local me 'lax' taaki browser cookie block na kare
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
-  res.cookie(
-    'refreshToken',
-    result.refreshToken,
-    {
-      httpOnly: true,
-      secure:
-        process.env.NODE_ENV ===
-        'production',
-      sameSite: 'strict',
-      maxAge:
-        7 * 24 * 60 * 60 * 1000,
-    }
-  );
+
+  res.cookie('refreshToken', result.refreshToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
   const userResponse = {
     _id: result.user._id,
     firstName: result.user.firstName,
@@ -128,13 +124,14 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 const changePassword = asyncHandler(async (req, res) => {
+  // 🚀 req.body.oldPassword ya req.body.currentPassword dono ko handle karne ke liye
+  const currentPassword = req.body.oldPassword || req.body.currentPassword;
 
-  const result =
-    await authService.changePassword(
-      req.user._id,
-      req.body.currentPassword,
-      req.body.newPassword
-    );
+  const result = await authService.changePassword(
+    req.user._id,
+    currentPassword,
+    req.body.newPassword
+  );
 
   return sendResponse(
     res,

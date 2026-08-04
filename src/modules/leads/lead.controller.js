@@ -1,10 +1,7 @@
 const leadService = require('./lead.service');
-
 const asyncHandler = require('../../common/asyncHandler');
 const sendResponse = require('../../common/apiResponse');
-
 const HTTP_STATUS = require('../../constants/httpStatus');
-
 
 const createLead = asyncHandler(async (req, res) => {
   const lead = await leadService.createLead(
@@ -20,23 +17,19 @@ const createLead = asyncHandler(async (req, res) => {
   );
 });
 
+const getAllLeads = asyncHandler(async (req, res) => {
+  const result = await leadService.getAllLeads(
+    req.query,
+    req.user
+  );
 
-const getAllLeads = asyncHandler(
-  async (req, res) => {
-    const result =
-      await leadService.getAllLeads(
-        req.query,
-        req.user
-      );
-
-    return sendResponse(
-      res,
-      HTTP_STATUS.OK,
-      'Leads fetched successfully',
-      result
-    );
-  }
-);
+  return sendResponse(
+    res,
+    HTTP_STATUS.OK,
+    'Leads fetched successfully',
+    result
+  );
+});
 
 const getLeadById = asyncHandler(async (req, res) => {
   const lead = await leadService.getLeadById(
@@ -50,7 +43,6 @@ const getLeadById = asyncHandler(async (req, res) => {
     lead
   );
 });
-
 
 const updateLead = asyncHandler(async (req, res) => {
   const lead = await leadService.updateLead(
@@ -67,7 +59,6 @@ const updateLead = asyncHandler(async (req, res) => {
   );
 });
 
-
 const deleteLead = asyncHandler(async (req, res) => {
   await leadService.deleteLead(
     req.params.id,
@@ -80,7 +71,6 @@ const deleteLead = asyncHandler(async (req, res) => {
     'Lead deleted successfully'
   );
 });
-
 
 const assignLead = asyncHandler(async (req, res) => {
   const lead = await leadService.assignLead(
@@ -97,7 +87,6 @@ const assignLead = asyncHandler(async (req, res) => {
   );
 });
 
-
 const updateLeadStatus = asyncHandler(async (req, res) => {
   const lead = await leadService.updateLeadStatus(
     req.params.id,
@@ -113,6 +102,20 @@ const updateLeadStatus = asyncHandler(async (req, res) => {
   );
 });
 
+const getMyLeads = asyncHandler(async (req, res) => {
+  const result = await leadService.getMyLeads(
+    req.query,
+    req.user 
+  );
+
+  return sendResponse(
+    res,
+    HTTP_STATUS.OK,
+    'My assigned leads fetched successfully',
+    result
+  );
+});
+
 
 module.exports = {
   createLead,
@@ -122,4 +125,5 @@ module.exports = {
   deleteLead,
   assignLead,
   updateLeadStatus,
+  getMyLeads
 };
