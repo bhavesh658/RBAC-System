@@ -14,9 +14,13 @@ app.use(helmet());
 
 app.set('trust proxy', 1);
 
+const allowedOrigins = ['http://localhost:5173'];
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 app.use(cors({
-  origin: process.env.CLIENT_URL
-  || (process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : undefined),
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(morgan('combined'));
