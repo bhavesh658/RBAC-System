@@ -14,7 +14,7 @@ app.use(helmet());
 
 app.set('trust proxy', 1);
 
-const allowedOrigins = ['http://localhost:5173'];
+const allowedOrigins = ['https://rbac-frontend-76ek.onrender.com'];
 if (process.env.CLIENT_URL) {
   allowedOrigins.push(process.env.CLIENT_URL);
 }
