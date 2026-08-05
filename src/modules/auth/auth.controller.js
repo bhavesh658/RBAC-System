@@ -7,20 +7,19 @@ const TokenBlacklist = require('./tokenBlacklist.model');
 const login = asyncHandler(async (req, res) => {
 
   const result = await authService.loginUser(req.body);
-  const isProduction = process.env.NODE_ENV === 'production';
+  
 
   res.cookie('accessToken', result.accessToken, {
     httpOnly: true,
-    secure: isProduction,
-    // Agar production hai toh 'none', local me 'lax' taaki browser cookie block na kare
-    sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    secure: true,
+    sameSite: "none",
+    maxAge: 24 * 60 * 60 * 1000,
   });
 
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   const userResponse = {
