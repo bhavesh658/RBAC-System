@@ -3,11 +3,15 @@ const AppError = require('../../common/AppError');
 const HTTP_STATUS = require('../../constants/httpStatus');
 const pagination = require('../../common/pagination');
 const { createActivityLog } = require('../activity-logs/activityLog.service')
+const crypto = require('crypto');
+const sendEmail = require('../auth/auth.utils').sendEmail;
+
+
 
 const createUser = async (data, createdBy) => {
   const email = data.email.trim().toLowerCase();
-  const existing = await User.findOne({ email })
-       .populate('createdBy', 'firstName lastName');
+  const currentuser = await User.findById(createdBy);
+  const existing = await User.findOne({ email }) .populate('createdBy', 'firstName lastName');
   if (existing) {
     throw new AppError(
       'User already exists with this email',
@@ -15,48 +19,121 @@ const createUser = async (data, createdBy) => {
     );
   }
 
-  const user = await User.create({
-    ...data,
-    email: data.email.toLowerCase(),
+  const inviteToken = crypto.randomBytes(20).toString('hex');
+  const inviteTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
+
+  const userData = { ...data };
+  delete userData.password;
+
+ const user = await User.create({
+    ...userData,
+    email,
     createdBy,
+    status: 'Pending',
+    inviteToken: inviteToken,
+    inviteTokenExpire: inviteTokenExpire,
   });
 
+  await user.populate([
+    { path: 'department', select: 'name -_id' },
+    { path: 'role', select: 'name -_id' }
+  ]);
+
+  const frontendURL = process.env.CLIENT_URL || 'http://localhost:5173';
+  const setupUrl = `${frontendURL}/setup-password/${inviteToken}`;
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2>Welcome to the RBAC System</h2>
+      <p>Hello ${user.firstName},</p>
+      <p>You have been invited by ${currentuser.firstName} ${currentuser.lastName} to join the platform.</p>
+      <p>Please click the button below to set up your password and activate your account:</p>
+      <a href="${setupUrl}" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
+        Set Password
+      </a>
+      <p style="margin-top: 20px; font-size: 12px; color: #666;">This link is valid for 24 hours.</p>
+    </div>
+  `;
+
+  await sendEmail({
+    to: user.email,
+    subject: 'Invitation to Join RBAC System - Setup Your Account',
+    html: emailHtml,
+  });
 
   await createActivityLog({
     module: 'User',
     action: 'Create',
-    description:
-      `${createdBy.firstName} ${createdBy.lastName} created user ${user.firstName} ${user.lastName}`,
+    description: `${currentuser.firstName} ${currentuser.lastName} created user ${user.firstName} ${user.lastName} (Invitation Sent)`,
     recordId: user._id,
-    performedBy: createdBy._id,
+    performedBy: currentuser  ._id,
     metadata: {
       newValue: {
-        firstName:user.firstName,
-        lastName:user.lastName,
-        email:user.email,
-        role:user.role,
-        department:user.department,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        status: 'Pending'
       },
     },
   });
+
+ return res.status(201).json({ success: true, user: responseData });
+};
+
+
+
+const setupPassword = async (token, newPassword) => {
+  const user = await User.findOne({
+    inviteToken: token,
+    inviteTokenExpire: { $gt: Date.now() },
+  });
+
+
+  if (!user) {
+    throw new AppError('Invalid or expired invitation token', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  user.password = newPassword;
+
+  // Activate user and remove tokens
+  user.status = 'Active';
+  user.inviteToken = undefined;
+  user.inviteTokenExpire = undefined;
+
+  await user.save();
+
+  //Add activity log for account activation
+  await createActivityLog({
+    module: 'User',
+    action: 'Activate',
+    description: `${user.firstName} set their password and activated their account.`,
+    recordId: user._id,
+    performedBy: user._id,
+  });
+
   return user;
 };
+
+
 
 const getUsers = async (filter = {}, query = {}) => {
   const { page, limit, skip } = pagination(query);
 
   const users = await User.find(filter)
-    .populate('department', 'name code')
-    .populate('role', 'name permissions')
+    .populate('department', 'name -_id') 
+    .populate('role', 'name -_id')
     .skip(skip)
     .limit(limit);
 
   const totalUsers = await User.countDocuments(filter);
-  
+
   const totalPages = Math.ceil(totalUsers / limit);
 
   return { users, totalPages, totalUsers, currentPage: page };
 };
+
 
 const getUserById = async (id) => {
   const user = await User.findById(id)
@@ -64,8 +141,8 @@ const getUserById = async (id) => {
     .populate({
       path: 'role',
       populate: {
-        path: 'permissions', 
-        select: 'name' 
+        path: 'permissions',
+        select: 'name'
       }
     });
 
@@ -101,7 +178,7 @@ const updateUser = async (id, data, updatedBy) => {
     recordId: user._id,
     performedBy: updatedBy._id,
     metadata: {
-      previousValue : {
+      previousValue: {
         firstName: oldData.firstName,
         lastName: oldData.lastName,
         email: oldData.email,
@@ -112,7 +189,7 @@ const updateUser = async (id, data, updatedBy) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role:  user.role,
+        role: user.role,
         department: user.department,
       },
     },
@@ -134,7 +211,7 @@ const toggleUserStatus = async (id, toggledBy) => {
   await createActivityLog({
     module: 'User',
     action: user.isActive ? 'Activate' : 'Deactivate',
-    description:  toggledBy.firstName + ' ' + toggledBy.lastName + ' ' + `${user.isActive ? 'Activated' : 'Deactivated'} user ${user.firstName} ${user.lastName}`,
+    description: toggledBy.firstName + ' ' + toggledBy.lastName + ' ' + `${user.isActive ? 'Activated' : 'Deactivated'} user ${user.firstName} ${user.lastName}`,
     recordId: user._id,
     performedBy: toggledBy._id,
     metadata: {
@@ -154,4 +231,5 @@ module.exports = {
   getUserById,
   updateUser,
   toggleUserStatus,
+  setupPassword
 };

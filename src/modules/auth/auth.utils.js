@@ -20,20 +20,27 @@ transporter.verify()
 
 
 const sendEmail = async ({ to, subject, html }) => {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM?.trim() || process.env.EMAIL_USER?.trim(),
+      to,
+      subject,
+      html,
+    });
 
-  const info = await transporter.sendMail({
-    from:
-      process.env.EMAIL_FROM?.trim() ||
-      process.env.EMAIL_USER?.trim(),
-    to,
-    subject,
-    html,
-  });
+    // FIX 1: Template literal use kiya taaki MessageID zaroor print ho
+    logger.info(`Email sent successfully. MessageID: ${info.messageId}`);
 
-  logger.info("Email sent:", info.messageId);
-
-  return info;
+    return info;
+  } catch (error) {
+    // FIX 2: Agar email fail hui toh asal error yahan print hogi
+    logger.error(`Failed to send email to ${to}. Error: ${error.message}`);
+    throw new Error(`Email sending failed: ${error.message}`);
+  }
 };
+
+
+
 const generateAccessToken = (user) => {
   if (!user || !user._id || !user.role || !user.department) {
     throw new Error('Invalid user object for token generation');

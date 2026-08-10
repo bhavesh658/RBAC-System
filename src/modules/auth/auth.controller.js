@@ -5,10 +5,7 @@ const authService = require('./auth.service');
 const TokenBlacklist = require('./tokenBlacklist.model');
 
 const login = asyncHandler(async (req, res) => {
-
   const result = await authService.loginUser(req.body);
-  
-
   res.cookie('accessToken', result.accessToken, {
     httpOnly: true,
     secure: true,
@@ -37,7 +34,7 @@ const login = asyncHandler(async (req, res) => {
   return sendResponse(
     res,
     HTTP_STATUS.OK,
-    "Login successful",
+    "Login successfully",
     {
       user: userResponse,
     }
@@ -123,9 +120,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 const changePassword = asyncHandler(async (req, res) => {
-  // 🚀 req.body.oldPassword ya req.body.currentPassword dono ko handle karne ke liye
   const currentPassword = req.body.oldPassword || req.body.currentPassword;
-
   const result = await authService.changePassword(
     req.user._id,
     currentPassword,

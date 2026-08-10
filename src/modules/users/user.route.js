@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('./user.controller');
-const { createUserValidation } = require('./user.validation');
+const { createUserValidation, setpasswordValidation } = require('./user.validation');
 const authenticate = require('../../middleware/authenticate');
 const authorize = require('../../middleware/authorize');
 const validateRequest = require('../../middleware/validateRequest');
@@ -49,4 +49,9 @@ router.patch(
   userController.toggleUserStatus
 );
 
+router.post(
+  '/setup-password/:token',
+  setpasswordValidation,
+  userController.setupPassword
+);
 module.exports = router;

@@ -18,6 +18,24 @@ const createUser = asyncHandler(async (req, res) => {
   );
 });
 
+
+const setupPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  if (!password || password.length < 6) {
+    return sendResponse(res, HTTP_STATUS.BAD_REQUEST, 'Password must be at least 6 characters long');
+  }
+
+  await userService.setupPassword(token, password);
+
+  return sendResponse(
+    res,
+    HTTP_STATUS.OK,
+    'Password set successfully. Your account is now active.'
+  );
+});
+
 const getUsers = asyncHandler(async (req, res) => {
   const result = await userService.getUsers({}, req.query);
   return res.status(200).json({
@@ -76,4 +94,5 @@ module.exports = {
   getUserById,
   updateUser,
   toggleUserStatus,
+  setupPassword
 };

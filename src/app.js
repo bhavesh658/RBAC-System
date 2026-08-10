@@ -1,20 +1,23 @@
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require("./middleware/sanitizeRequest")
+const mongoSanitize = require("./middleware/sanitizeRequest");
 const apiRoutes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
 
 app.set('trust proxy', 1);
 
-const allowedOrigins = ['https://rbac-frontend-76ek.onrender.com'];
+const allowedOrigins = ['https://rbac-frontend-76ek.onrender.com', 'http://localhost:5173'];
 if (process.env.CLIENT_URL) {
   allowedOrigins.push(process.env.CLIENT_URL);
 }
@@ -23,15 +26,15 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
+
+
 app.use(morgan('combined'));
 
-app.use(mongoSanitize)
+app.use(mongoSanitize);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -43,7 +46,6 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
 
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
@@ -58,8 +60,8 @@ app.get("/", (req, res) => {
     message: "RBAC API is running"
   });
 });
-app.use('/api/v1', apiRoutes);
 
+app.use('/api/v1', apiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -67,7 +69,6 @@ app.use((req, res) => {
     message: 'Route not found',
   });
 });
-
 
 app.use(errorHandler);
 

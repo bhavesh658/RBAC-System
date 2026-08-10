@@ -4,18 +4,15 @@ const User = require('../users/user.model');
 const AppError = require('../../common/AppError');
 const HTTP_STATUS = require('../../constants/httpStatus');
 const { generateAccessToken, generateRefreshToken, sendEmail } = require('./auth.utils');
-const crypto = require('crypto');
 const TokenBlacklist = require('./tokenBlacklist.model');
 const jwt = require('jsonwebtoken');
 
-const loginUser = async ({
-    email,
-    password,
-}) => {
+const loginUser = async ({email,password,}) => {
     const user = await User.findOne({
         email: email.toLowerCase(),
     })
         .select("+password")
+
 
     if (!user) {
         throw new AppError(
@@ -36,15 +33,13 @@ const loginUser = async ({
 
     if (!isPasswordValid) {
         throw new AppError(
-            "Invalid email or password",
+            "Invalid password",
             HTTP_STATUS.UNAUTHORIZED
         );
     }
 
-    const accessToken =
-        generateAccessToken(user);
-    const refreshToken =
-        generateRefreshToken(user);
+    const accessToken =generateAccessToken(user);
+    const refreshToken =generateRefreshToken(user);
     await User.updateOne(
         { _id: user._id },
         {

@@ -28,9 +28,14 @@ const userSchema = new mongoose.Schema(
 
         password: {
             type: String,
-            required: [true, 'Password is required'],
+            required: [false, 'Password is optional'],
             minlength: [6, 'Password must be at least 6 characters long'],
             select: false,
+        },
+        status: {
+            type: String,
+            enum: ['Pending', 'Active', 'Inactive'],
+            default: 'Pending',
         },
 
         phone: {
@@ -43,6 +48,7 @@ const userSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Department',
             default: null,
+            require:true,
 
         },
 
@@ -50,6 +56,7 @@ const userSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Role',
             default: null,
+            required:true,
         },
 
         createdBy: {
@@ -84,6 +91,8 @@ const userSchema = new mongoose.Schema(
             default: null,
             select: false,
         },
+        inviteToken: String,
+        inviteTokenExpire: Date,
     },
     {
         timestamps: true,
