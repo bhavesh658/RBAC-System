@@ -11,7 +11,8 @@ const sendEmail = require('../auth/auth.utils').sendEmail;
 const createUser = async (data, createdBy) => {
   const email = data.email.trim().toLowerCase();
   const currentuser = await User.findById(createdBy);
-  const existing = await User.findOne({ email }) .populate('createdBy', 'firstName lastName');
+  const existing = await User.findOne({ email }).populate('createdBy', 'firstName lastName');
+  
   if (existing) {
     throw new AppError(
       'User already exists with this email',
@@ -25,7 +26,7 @@ const createUser = async (data, createdBy) => {
   const userData = { ...data };
   delete userData.password;
 
- const user = await User.create({
+  const user = await User.create({
     ...userData,
     email,
     createdBy,
@@ -42,40 +43,34 @@ const createUser = async (data, createdBy) => {
   const frontendURL = process.env.CLIENT_URL || 'http://localhost:5173';
   const setupUrl = `${frontendURL}/setup-password/${inviteToken}`;
 
- const emailHtml = `
+  const emailHtml = `
   <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f7f6; padding: 40px 20px;">
-    
     <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-      
-      <!--  Header Area -->
+      <!-- Header Area -->
       <div style="background-color: #FF6600; padding: 30px 20px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.5px;">
           Syandrix Infotech
         </h1>
       </div>
 
-      <!--  Body Content -->
+      <!-- Body Content -->
       <div style="padding: 40px 30px;">
         <h2 style="margin-top: 0; color: #1a1a1a; font-size: 22px; font-weight: 600;">
           Welcome to the family!
         </h2>
-        
         <p style="font-size: 16px; line-height: 1.6; color: #4a4a4a; margin-bottom: 20px;">
           Hello <strong>${user.firstName}</strong>,
         </p>
-        
         <p style="font-size: 16px; line-height: 1.6; color: #4a4a4a; margin-bottom: 25px;">
           You have been invited by the management to join the <strong>Syandrix Infotech Management Console</strong>. We are thrilled to have you on board!
         </p>
-        
         <p style="font-size: 16px; line-height: 1.6; color: #4a4a4a; margin-bottom: 35px;">
           To get started, please click the button below to set up your secure password and activate your account.
         </p>
 
-        <!--  Call to Action Button -->
+        <!-- Call to Action Button -->
         <div style="text-align: center; margin: 40px 0;">
-          <a href="${setupUrl}" 
-             style="background-color: #FF6600; color: #ffffff; text-decoration: none; padding: 14px 35px; font-size: 16px; font-weight: bold; border-radius: 50px; display: inline-block;">
+          <a href="${setupUrl}" style="background-color: #FF6600; color: #ffffff; text-decoration: none; padding: 14px 35px; font-size: 16px; font-weight: bold; border-radius: 50px; display: inline-block;">
             Set Up Password
           </a>
         </div>
@@ -85,7 +80,7 @@ const createUser = async (data, createdBy) => {
         </p>
       </div>
 
-      <!--  Footer -->
+      <!-- Footer -->
       <div style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
         <p style="margin: 0; font-size: 12px; color: #999999;">
           &copy; ${new Date().getFullYear()} Syandrix Infotech. All rights reserved.
@@ -94,23 +89,30 @@ const createUser = async (data, createdBy) => {
           This is an automated system email. Please do not reply.
         </p>
       </div>
-
     </div>
   </div>
-`;
+  `;
 
-  await sendEmail({
-    to: user.email,
-    subject: 'Invitation to Join RBAC System - Setup Your Account',
-    html: emailHtml,
-  });
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Invitation to Join RBAC System - Setup Your Account',
+      html: emailHtml,
+    });
+  } catch (emailError) {
+    await User.findByIdAndDelete(user._id);
+    throw new AppError(
+      'User created but failed to send invitation email. Process reverted.',
+      HTTP_STATUS.INTERNAL_SERVER_ERROR
+    );
+  }
 
   await createActivityLog({
     module: 'User',
     action: 'Create',
     description: `${currentuser.firstName} ${currentuser.lastName} created user ${user.firstName} ${user.lastName} (Invitation Sent)`,
     recordId: user._id,
-    performedBy: currentuser  ._id,
+    performedBy: currentuser._id,
     metadata: {
       newValue: {
         firstName: user.firstName,
@@ -123,7 +125,7 @@ const createUser = async (data, createdBy) => {
     },
   });
 
- return user;
+  return user;
 };
 
 
