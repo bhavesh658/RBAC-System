@@ -42,18 +42,62 @@ const createUser = async (data, createdBy) => {
   const frontendURL = process.env.CLIENT_URL || 'http://localhost:5173';
   const setupUrl = `${frontendURL}/setup-password/${inviteToken}`;
 
-  const emailHtml = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
-      <h2>Welcome to the RBAC System</h2>
-      <p>Hello ${user.firstName},</p>
-      <p>You have been invited by ${currentuser.firstName} ${currentuser.lastName} to join the platform.</p>
-      <p>Please click the button below to set up your password and activate your account:</p>
-      <a href="${setupUrl}" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
-        Set Password
-      </a>
-      <p style="margin-top: 20px; font-size: 12px; color: #666;">This link is valid for 24 hours.</p>
+ const emailHtml = `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f7f6; padding: 40px 20px;">
+    
+    <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+      
+      <!--  Header Area -->
+      <div style="background-color: #FF6600; padding: 30px 20px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.5px;">
+          Syandrix Infotech
+        </h1>
+      </div>
+
+      <!--  Body Content -->
+      <div style="padding: 40px 30px;">
+        <h2 style="margin-top: 0; color: #1a1a1a; font-size: 22px; font-weight: 600;">
+          Welcome to the family!
+        </h2>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #4a4a4a; margin-bottom: 20px;">
+          Hello <strong>${user.firstName}</strong>,
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #4a4a4a; margin-bottom: 25px;">
+          You have been invited by the management to join the <strong>Syandrix Infotech Management Console</strong>. We are thrilled to have you on board!
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #4a4a4a; margin-bottom: 35px;">
+          To get started, please click the button below to set up your secure password and activate your account.
+        </p>
+
+        <!--  Call to Action Button -->
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${setupUrl}" 
+             style="background-color: #FF6600; color: #ffffff; text-decoration: none; padding: 14px 35px; font-size: 16px; font-weight: bold; border-radius: 50px; display: inline-block;">
+            Set Up Password
+          </a>
+        </div>
+
+        <p style="font-size: 14px; color: #888888; text-align: center; margin-top: 30px; border-top: 1px solid #eeeeee; padding-top: 20px;">
+          <em>Note: This secure link is valid for <strong>24 hours</strong> only.</em>
+        </p>
+      </div>
+
+      <!--  Footer -->
+      <div style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
+        <p style="margin: 0; font-size: 12px; color: #999999;">
+          &copy; ${new Date().getFullYear()} Syandrix Infotech. All rights reserved.
+        </p>
+        <p style="margin: 5px 0 0; font-size: 12px; color: #999999;">
+          This is an automated system email. Please do not reply.
+        </p>
+      </div>
+
     </div>
-  `;
+  </div>
+`;
 
   await sendEmail({
     to: user.email,
@@ -79,7 +123,7 @@ const createUser = async (data, createdBy) => {
     },
   });
 
- return res.status(201).json({ success: true, user: responseData });
+ return user;
 };
 
 
