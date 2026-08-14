@@ -31,7 +31,10 @@ const passwordRules = (fieldName) =>
     );
 
 const resetPasswordValidation = [
-  passwordRules('password'),
+  body('token')
+    .notEmpty()
+    .withMessage('Reset token is required.'),
+  passwordRules('newPassword') 
 ];
 
 const changePasswordValidation = [

@@ -28,12 +28,10 @@ const sendEmail = async ({ to, subject, html }) => {
       html,
     });
 
-    // FIX 1: Template literal use kiya taaki MessageID zaroor print ho
     logger.info(`Email sent successfully. MessageID: ${info.messageId}`);
 
     return info;
   } catch (error) {
-    // FIX 2: Agar email fail hui toh asal error yahan print hogi
     logger.error(`Failed to send email to ${to}. Error: ${error.message}`);
     throw new Error(`Email sending failed: ${error.message}`);
   }
@@ -51,12 +49,7 @@ const generateAccessToken = (user) => {
     department: user.department.toString(),
   };
 
-  // if (!user || !user._id ) {
-  //   throw new Error('Invalid user object for token generation');
-  // }
-  // const payload = {
-  //   sub: user._id.toString(),
-  // };
+  
 
   const token = jwt.sign(
     payload,

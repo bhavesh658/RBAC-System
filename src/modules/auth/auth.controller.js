@@ -92,31 +92,17 @@ const getProfile = asyncHandler(async (req, res) => {
 
 
 const forgotPassword = asyncHandler(async (req, res) => {
-  const result =
-    await authService.forgotPassword(
-      req.body.email
-    );
-
-  return sendResponse(
-    res,
-    HTTP_STATUS.OK,
-    result.message
-  );
+  const result = await authService.forgotPassword(req.body.email);
+  return sendResponse(res, HTTP_STATUS.OK, result.message);
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const result =
-    await authService.resetPassword(
-      req.body.email,
-      req.body.otp,
+  const result = await authService.resetPassword(
+      req.body.token, 
       req.body.newPassword
-    );
-
-  return sendResponse(
-    res,
-    HTTP_STATUS.OK,
-    result.message
   );
+
+  return sendResponse(res, HTTP_STATUS.OK, result.message);
 });
 
 const changePassword = asyncHandler(async (req, res) => {
