@@ -5,19 +5,18 @@ const logger = require('../../utils/logger');
 
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST?.trim(),
-  port: Number(process.env.EMAIL_PORT) || 587,
-  secure: Number(process.env.EMAIL_PORT) === 465, 
+  service: 'gmail', 
+  host: 'smtp.gmail.com',
+  port: 465,     
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER?.trim(),
     pass: process.env.EMAIL_PASSWORD?.trim(),
   },
-  family: 4, 
   tls: {
     rejectUnauthorized: false
   }
 });
-
 transporter.verify()
   .then(() => logger.info("SMTP connection successful and ready to send emails"))
   .catch((err) => logger.error("SMTP connection failed on startup:", err));
