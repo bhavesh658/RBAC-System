@@ -39,8 +39,7 @@ const createUser = async (data, createdBy) => {
     { path: 'department', select: 'name -_id' },
     { path: 'role', select: 'name -_id' }
   ]);
-
-  const frontendURL = process.env.CLIENT_URL || 'http://localhost:5173';
+  const frontendURL = process.env.CLIENT_URL;
   const setupUrl = `${frontendURL}/setup-password/${inviteToken}`;
 
   const emailHtml = `
