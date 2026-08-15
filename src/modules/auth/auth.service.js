@@ -98,57 +98,85 @@ const logoutUser = async (
 
 
 const forgotPassword = async (email) => {
-    const user = await User.findOne({
-        email: email.toLowerCase(),
-    });
+    try {
+        console.log(`[FORGOT_PASSWORD] 1. Request aayi for email: ${email}`);
+        
+        const user = await User.findOne({
+            email: email.toLowerCase(),
+        });
 
-    if (!user) {
-        throw new AppError(
-            'If an account exists with this email, a password reset link has been sent.',
-            HTTP_STATUS.NOT_FOUND
+        if (!user) {
+            console.log(`[FORGOT_PASSWORD] 2. User nahi mila DB mein`);
+            throw new AppError(
+                'If an account exists with this email, a password reset link has been sent.',
+                404 // HTTP_STATUS.NOT_FOUND
+            );
+        }
+
+        console.log(`[FORGOT_PASSWORD] 3. User mil gaya. Token generate kar rahe hain...`);
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordTokenExpires = new Date(
+            Date.now() + 15 * 60 * 1000
         );
+
+        console.log(`[FORGOT_PASSWORD] 4. Token DB mein save kar rahe hain...`);
+        await user.save({ validateBeforeSave: false });
+        console.log(`[FORGOT_PASSWORD] 5. Token save ho gaya!`);
+
+        const frontendUrl = process.env.CLIENT_URL;
+        console.log(`[FORGOT_PASSWORD] 6. CLIENT_URL hai: ${frontendUrl}`);
+        
+        const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+        console.log(`[FORGOT_PASSWORD] 7. Final Reset URL: ${resetUrl}`);
+
+        console.log(`[FORGOT_PASSWORD] 8. Email send karna shuru kar rahe hain...`);
+        
+        // 🚀 CRITICAL: Yahan try-catch lagaya hai email ka error pakadne ke liye
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: 'Reset Your RBAC Password',
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #333;">RBAC System Password Reset</h2>
+                    <p>You recently requested to reset your password for your account.</p>
+                    <p>Click the button below to set a new password:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetUrl}" style="background-color: #FF6600; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
+                    </div>
+                    <p style="color: #666; font-size: 14px;">This link is valid for 15 minutes. If you did not request this, please ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;" />
+                    <p style="color: #999; font-size: 12px;">If the button doesn't work, copy and paste this link into your browser:<br/>${resetUrl}</p>
+                  </div>
+                `,
+            });
+            console.log(`[FORGOT_PASSWORD] 9. ✅ EMAIL SUCCESSFULLY SENT!`);
+        } catch (emailError) {
+            // Agar email fail hoga, toh yahan phansega aur exact reason dikhayega
+            console.error(`[FORGOT_PASSWORD] ❌ EMAIL SENDING FAILED:`, emailError);
+            
+            // Database se token delete kar do kyunki email hi nahi gaya
+            user.resetPasswordToken = undefined;
+            user.resetPasswordTokenExpires = undefined;
+            await user.save({ validateBeforeSave: false });
+
+            throw new AppError('There was an error sending the email. Try again later!', 500);
+        }
+
+        return {
+            message: 'If an account exists with this email, a password reset link has been sent.',
+        };
+        
+    } catch (error) {
+        console.error(`[FORGOT_PASSWORD] Main error block me phansa:`, error.message);
+        throw error;
     }
-
-    const resetToken = crypto.randomBytes(32).toString('hex');
-
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(resetToken)
-        .digest('hex');
-
-    user.resetPasswordToken = hashedToken;
-    user.resetPasswordTokenExpires = new Date(
-        Date.now() + 15 * 60 * 1000
-    );
-
-    await user.save({ validateBeforeSave: false });
-     console.log(process.env.CLIENT_URL);
-    const frontendUrl = process.env.CLIENT_URL;
-
-    
-    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
-
-    await sendEmail({
-        to: user.email,
-        subject: 'Reset Your RBAC Password',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-            <h2 style="color: #333;">RBAC System Password Reset</h2>
-            <p>You recently requested to reset your password for your account.</p>
-            <p>Click the button below to set a new password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" style="background-color: #FF6600; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
-            </div>
-            <p style="color: #666; font-size: 14px;">This link is valid for 15 minutes. If you did not request this, please ignore this email.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin-top: 30px;" />
-            <p style="color: #999; font-size: 12px;">If the button doesn't work, copy and paste this link into your browser:<br/>${resetUrl}</p>
-          </div>
-        `,
-    });
-
-    return {
-        message: 'If an account exists with this email, a password reset link has been sent.',
-    };
 };
 
 
