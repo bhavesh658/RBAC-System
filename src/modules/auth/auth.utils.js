@@ -7,11 +7,15 @@ const logger = require('../../utils/logger');
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST?.trim(),
   port: Number(process.env.EMAIL_PORT) || 587,
-  secure: false, // true only for port 465
+  secure: Number(process.env.EMAIL_PORT) === 465, 
   auth: {
     user: process.env.EMAIL_USER?.trim(),
     pass: process.env.EMAIL_PASSWORD?.trim(),
   },
+  family: 4, 
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 transporter.verify()
