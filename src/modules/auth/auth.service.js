@@ -123,7 +123,7 @@ const forgotPassword = async (email) => {
 
     await user.save({ validateBeforeSave: false });
      console.log(process.env.CLIENT_URL);
-    const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.CLIENT_URL;
 
     
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
