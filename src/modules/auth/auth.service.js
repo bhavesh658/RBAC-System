@@ -99,21 +99,18 @@ const logoutUser = async (
 
 const forgotPassword = async (email) => {
     try {
-        console.log(`[FORGOT_PASSWORD] 1. Request aayi for email: ${email}`);
         
         const user = await User.findOne({
             email: email.toLowerCase(),
         });
 
         if (!user) {
-            console.log(`[FORGOT_PASSWORD] 2. User nahi mila DB mein`);
             throw new AppError(
                 'If an account exists with this email, a password reset link has been sent.',
-                404 // HTTP_STATUS.NOT_FOUND
+                404 
             );
         }
 
-        console.log(`[FORGOT_PASSWORD] 3. User mil gaya. Token generate kar rahe hain...`);
         const resetToken = crypto.randomBytes(32).toString('hex');
         const hashedToken = crypto
             .createHash('sha256')
@@ -125,19 +122,13 @@ const forgotPassword = async (email) => {
             Date.now() + 15 * 60 * 1000
         );
 
-        console.log(`[FORGOT_PASSWORD] 4. Token DB mein save kar rahe hain...`);
         await user.save({ validateBeforeSave: false });
-        console.log(`[FORGOT_PASSWORD] 5. Token save ho gaya!`);
 
         const frontendUrl = process.env.CLIENT_URL;
-        console.log(`[FORGOT_PASSWORD] 6. CLIENT_URL hai: ${frontendUrl}`);
         
         const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
-        console.log(`[FORGOT_PASSWORD] 7. Final Reset URL: ${resetUrl}`);
 
-        console.log(`[FORGOT_PASSWORD] 8. Email send karna shuru kar rahe hain...`);
         
-        // 🚀 CRITICAL: Yahan try-catch lagaya hai email ka error pakadne ke liye
         try {
             await sendEmail({
                 to: user.email,
@@ -156,12 +147,8 @@ const forgotPassword = async (email) => {
                   </div>
                 `,
             });
-            console.log(`[FORGOT_PASSWORD] 9. ✅ EMAIL SUCCESSFULLY SENT!`);
         } catch (emailError) {
-            // Agar email fail hoga, toh yahan phansega aur exact reason dikhayega
-            console.error(`[FORGOT_PASSWORD] ❌ EMAIL SENDING FAILED:`, emailError);
             
-            // Database se token delete kar do kyunki email hi nahi gaya
             user.resetPasswordToken = undefined;
             user.resetPasswordTokenExpires = undefined;
             await user.save({ validateBeforeSave: false });
@@ -174,7 +161,6 @@ const forgotPassword = async (email) => {
         };
         
     } catch (error) {
-        console.error(`[FORGOT_PASSWORD] Main error block me phansa:`, error.message);
         throw error;
     }
 };

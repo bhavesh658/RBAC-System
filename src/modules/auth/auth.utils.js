@@ -4,24 +4,10 @@ const logger = require('../../utils/logger');
 
 
 
-// const transporter = nodemailer.createTransport({
-//   host: 'smtp.gmail.com',
-//   port: 587,              // 🚀 Wapas 587 try kar rahe hain
-//   secure: false,          // 🚀 587 ke liye hamesha false rahega
-//   requireTLS: true,       // 🚀 STARTTLS force karne ke liye
-//   auth: {
-//     user: process.env.EMAIL_USER?.trim(),
-//     pass: process.env.EMAIL_PASSWORD?.trim(),
-//   },
-//   family: 4,              // 🚀 Ye IPv6 bypass hamesha on rakhna hai
-//   connectionTimeout: 20000, // 🚀 20 seconds ka wait time de rahe hain (default bohot kam hota hai)
-//   greetingTimeout: 20000,
-// });
-
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST1?.trim(),
   port: Number(process.env.EMAIL_PORT1) || 587,
-  secure: false, // 587 ke liye false hi rahega
+  secure: false, 
   auth: {
     user: process.env.EMAIL_USER1?.trim(),
     pass: process.env.EMAIL_PASSWORD1?.trim(),
